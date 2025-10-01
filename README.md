@@ -17,8 +17,6 @@ _Definem o que o Watson **precisa fazer**:_
     * Buscar prontuários por data.
     * Realizar uma busca por palavra-chave no texto das anotações das sessões.
 
----
-
 ### Requisitos Não Funcionais:
 
 _Definem o **quão bem** o Watson faz:_
@@ -30,8 +28,6 @@ _Definem o **quão bem** o Watson faz:_
     * O sistema deve ter um sistema de backup automático.
     * Deve-se prever a sincronização automática dos dados após cada nova entrada, para minimizar o risco de perda de dados em caso de falha de hardware.
 * **Desempenho**: O software deve ter um desempenho rápido nas operações de busca e manipulação de dados, mesmo com um histórico extenso de prontuários.
-
----
 
 ### Requisitos de Domínio do Negócio
 
@@ -51,8 +47,6 @@ Refino dos requisitos para que sejam claros, completos e consistentes (a gente t
 
 * **Psicólogo**: O único ator humano. É o usuário principal e administrador do próprio sistema, com acesso total a todas as funcionalidades e dados.
 * **Sistema (ou Agente de Backup)**: O ator técnico, responsável por tarefas automáticas, como o backup.
-
----
 
 ### Casos de Uso do Psicólogo:
 
@@ -126,8 +120,6 @@ Refino dos requisitos para que sejam claros, completos e consistentes (a gente t
     5.  Ele salva as alterações.
     6.  O sistema atualiza o registro do prontuário, com uma validação para garantir que o prontuário não seja modificado após um período determinado.
 
----
-
 ### Casos de Uso do Sistema:
 
 _Esses casos de uso são automáticos._
@@ -135,3 +127,55 @@ _Esses casos de uso são automáticos._
 * **Realizar Backup Automático**: Garante a segurança dos dados.
 * **Garantir Conformidade Legal (Guarda de Prontuários)**: Assegura que os prontuários sejam mantidos pelo período mínimo de 5 anos exigido pela legislação.
 
+---
+
+## Arquitetura e Design:
+
+### Estrutura Geral do Software (Arquitetura em Camadas):
+
+O software será desenvolvido com uma **arquitetura em camadas** para garantir modularidade, flexibilidade e facilitar a manutenção.
+
+* **Camada de Apresentação (UI - Interface do Usuário)**: Exibe os dados e captura as entradas, mas não contém lógica de negócio.
+* **Camada de Lógica de Negócio**: As regras de negócio e a validação de dados. Ela orquestra as ações do usuário, comunicando-se com a camada de acesso a dados.
+* **Camada de Acesso a Dados (DAO)**: A camada mais baixa, responsável por interagir diretamente com o banco de dados SQLite. Ela isola a lógica de negócio dos detalhes técnicos de armazenamento, como a sintaxe SQL.
+
+### Padrões de Projeto (Design Detalhado):
+
+Para organizar as camadas, serão aplicados os seguintes padrões de projeto:
+
+* **Model-View-Presenter (MVP)**: Separa a interface (View) da lógica de apresentação (Presenter) e do modelo de dados (Model). Isso permite que a lógica de negócio seja testada independentemente da interface do usuário.
+* **Data Mapper**: Utilizado na camada de acesso a dados. O Data Mapper será uma ponte entre os objetos de negócio (por exemplo, a classe `TPacient`) e as tabelas do banco de dados, movendo dados de um para o outro de forma transparente.
+
+### Design do Banco de Dados (SQLite):
+
+A base de dados será composta por duas tabelas principais, seguindo o modelo relacional para armazenar os pacientes e seus respectivos prontuários. Todos os nomes de tabelas e campos estão em inglês e maiúsculas, conforme solicitado.
+
+#### Tabela `PATIENT`
+
+Armazena as informações cadastrais de cada paciente.
+
+| Campo | Tipo de Dados | Descrição |
+| :--- | :--- | :--- |
+| **PATIENT_ID** | `INTEGER` | Chave primária. Auto-incremento. |
+| **NAME** | `TEXT` | Nome completo do paciente. |
+| **BIRTH_DATE** | `TEXT` | Data de nascimento (formato YYYY-MM-DD para consistência). |
+| **DOCUMENT** | `TEXT` | Documento de identificação (por exemplo, RG ou CPF). |
+| **PHONE** | `TEXT` | Telefone de contato. |
+| **EMAIL** | `TEXT` | E-mail de contato. |
+
+#### Tabela `RECORD`
+
+Armazena os registros de cada sessão de terapia.
+
+| Campo | Tipo de Dados | Descrição |
+| :--- | :--- | :--- |
+| **RECORD_ID** | `INTEGER` | Chave primária. Auto-incremento. |
+| **PATIENT_ID** | `INTEGER` | Chave estrangeira que se relaciona com `PATIENT_ID` na tabela `PATIENTS`. |
+| **SESSION_DATE** | `TEXT` | Data da sessão (formato YYYY-MM-DD). |
+| **START_TIME** | `TEXT` | Hora de início da sessão (formato HH:MM). |
+| **END_TIME** | `TEXT` | Hora de término da sessão (formato HH:MM). |
+| **NOTES** | `TEXT` | O conteúdo da sessão, onde o psicólogo fará suas anotações. |
+
+### Relacionamento entre as Tabelas:
+
+O relacionamento entre as duas tabelas é de **um para muitos**: um `PACIENTE` pode ter múltiplos `PRONTUÁRIOS`, mas um `PRONTUÁRIO` pertence a apenas um único `PACIENTE`. A chave estrangeira `PATIENT_ID` na tabela `RECORDS` é o elo que estabelece essa conexão.
